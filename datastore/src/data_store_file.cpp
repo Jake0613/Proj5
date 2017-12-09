@@ -1,3 +1,7 @@
+#include <string>
+#include <fstream>
+#include <sstream>
+
 #include "../includes/data_store_file.h"
 
 using namespace std;
@@ -38,11 +42,11 @@ int getCountFromSerialization(string myString)
 	{
 		if(myString[i] == ',')
 		{
-			temp = myString.substr(i++);
+			temp = std::stoi(myString.substr(i+1));
 			break;
 		}
 	}
-	return temp;
+	return temp-1;
 }
 
 //load from file myFileName, if present, use the crypto object to decrypt
@@ -58,11 +62,13 @@ bool DataStore_File::load(std::vector<String_Data> &myVector)
 		while(!myinputstream.eof())
 		{
 			getline(myinputstream, line);
-			decrypt(line);
-			cout << "Line: " << line << endl;
-			if(line != "")
+			if(line != "" && line != " ")
 			{
-				myVector.push_back(String_Data(getStringFromSerialization(line)));
+				decrypt(line);
+				String_Data temp = String_Data(getStringFromSerialization(line));
+				for(int i=0;i<getCountFromSerialization(line);i++)
+					temp.increment();
+				myVector.push_back(temp);
 			}
 		}
 
@@ -86,11 +92,13 @@ bool DataStore_File::save(std::vector<String_Data> &myVector)
 	{
 		for(unsigned int i = 0; i<myVector.size();i++)
 		{
-			String_Data tempData = myVector[i];
-			string tempStr = tempData.serialize();
-			cout << "Serialized string: " << tempStr << endl;
-			encrypt(tempStr);
-			myoutputstream << tempStr << endl;;
+			if(myVector[i].serialize() != "" && myVector[i].serialize() != " ")
+			{
+				String_Data tempData = myVector[i];
+				string tempStr = tempData.serialize();
+				encrypt(tempStr);
+				myoutputstream << tempStr << endl;;
+			}
 		}
 
 		myoutputstream.close();

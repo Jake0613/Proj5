@@ -36,36 +36,33 @@ void String_Database::add(std::string &myString)
 
 	//isn't myStringsIter a global so should it be locked by a mutex?
 	//should i even use the iterator
+	lock_guard<std::mutex> lock(this->mutex);
 	for(unsigned int i=0;i<myStrings.size();i++)
 	{
 		if(myString == getStringFromString_Data(myStrings[i].serialize()))
 		{
 			//does this increment need to be locked?
-			mutex.lock();
 			myStrings[i].increment();
-			mutex.unlock();
 			found = true;
 		}
 	}
 
 	if(!found)
 	{
-		mutex.lock();
+		//lock_guard<std::mutex> lock(this->mutex);
 		myStrings.push_back(String_Data(myString));
-		mutex.unlock();
 	}
 }
 
 //get number of times myString has been seen (or added with add)
 int String_Database::getCount(std::string &myString)
 {
+	lock_guard<std::mutex> lock(this->mutex);
 	for(unsigned int i=0;i<myStrings.size();i++)
 	{
 		if(myString == getStringFromString_Data(myStrings[i].serialize()))
 		{
-			mutex.lock();
 			return this->myStrings[i].getCount();
-			mutex.unlock();
 		}
 	}
 
@@ -87,9 +84,7 @@ bool String_Database::load(DataStore  *myDataStore)
 		return false;
 	else
 	{
-		mutex.lock();
 		myDataStore->load(myStrings);
-		mutex.unlock();
 	}
 	return true;
 }
@@ -103,9 +98,7 @@ bool String_Database::save(DataStore *myDataStore)
 		return false;
 	else
 	{
-		mutex.lock();
 		myDataStore->save(myStrings);
-		mutex.unlock();
 	}
 	return true;
 }
